@@ -1,0 +1,124 @@
+{% extends "layout.html" %}
+
+{% block title %}Network Anomaly Detection - Home{% endblock %}
+
+{% block home_active %}active{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+    <h1 class="display-4">Welcome to NetGuard</h1>
+    <p class="lead">Advanced Network Anomaly Detection System</p>
+    <hr class="my-4">
+    <p>Detect and analyze network intrusions and anomalies using machine learning.</p>
+    <div class="mt-4">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg me-2">
+            <i class="bi bi-speedometer2"></i> View Dashboard
+        </a>
+        <!-- <a href="{{ url_for('predict_form') }}" class="btn btn-success btn-lg">
+            <i class="bi bi-search"></i> Live Detection
+        </a> -->
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card feature-card">
+            <div class="card-body">
+                <div class="feature-icon">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <h5 class="card-title">Real-time Detection</h5>
+                <p class="card-text">Monitor network traffic in real-time to detect anomalies and potential security
+                    threats.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card feature-card">
+            <div class="card-body">
+                <div class="feature-icon">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+                <h5 class="card-title">Advanced Analytics</h5>
+                <p class="card-text">Visualize network patterns and gain insights through interactive dashboards and
+                    reports.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card feature-card">
+            <div class="card-body">
+                <div class="feature-icon">
+                    <i class="bi bi-lightning"></i>
+                </div>
+                <h5 class="card-title">Instant Alerts</h5>
+                <p class="card-text">Receive immediate notifications when suspicious activities are detected in your
+                    network.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-shield-exclamation"></i> Common Attack Types</h5>
+            </div>
+            <div class="card-body">
+                <div class="attack-type">
+                    <h6><span class="badge bg-danger">DoS</span> Denial of Service</h6>
+                    <p>Attacks that attempt to make a network resource unavailable to its intended users.</p>
+                </div>
+                <div class="attack-type">
+                    <h6><span class="badge bg-warning">Probe</span> Network Scanning</h6>
+                    <p>Reconnaissance attacks that scan network ports to find vulnerabilities.</p>
+                </div>
+                <div class="attack-type">
+                    <h6><span class="badge bg-info">R2L</span> Remote to Local</h6>
+                    <p>Unauthorized access from a remote machine to a local machine.</p>
+                </div>
+                <div class="attack-type">
+                    <h6><span class="badge bg-primary">U2R</span> User to Root</h6>
+                    <p>Unauthorized access to local superuser (root) privileges.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-info-circle"></i> Getting Started</h5>
+            </div>
+            <div class="card-body">
+                <div class="getting-started-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h6>Explore the Dashboard</h6>
+                        <p>View key metrics and visualizations about your network traffic.</p>
+                    </div>
+                </div>
+                <div class="getting-started-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h6>Analyze Visualizations</h6>
+                        <p>Dive deeper into traffic patterns and anomaly distributions.</p>
+                    </div>
+                </div>
+                <!-- <div class="getting-started-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h6>Try Live Detection</h6>
+                        <p>Test specific network traffic parameters for anomaly detection.</p>
+                    </div>
+                </div> -->
+                <div class="mt-3">
+                    <a href="{{ url_for('help_page') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-book"></i> Learn More
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

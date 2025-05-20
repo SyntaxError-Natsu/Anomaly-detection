@@ -1,0 +1,244 @@
+{% extends "layout.html" %}
+
+{% block title %}Network Anomaly Detection - Results{% endblock %}
+
+{% block predict_active %}active{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1><i class="bi bi-clipboard-data"></i> Analysis Results</h1>
+    <p class="lead">Detailed results of network traffic analysis</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Traffic Analysis Results</h6>
+                <a href="{{ url_for('predict_form') }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-arrow-left"></i> Back to Analysis Form
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        {% if result.prediction == 'Normal Traffic' %}
+                        <div class="result-box result-normal">
+                            <div class="result-title">
+                                <i class="bi bi-shield-check me-2"></i> Normal Traffic Detected
+                            </div>
+                            <p>The analyzed traffic pattern appears to be normal with no signs of malicious activity.
+                            </p>
+                            <div class="mt-3">
+                                <strong>Confidence:</strong> {{ (result.probability * 100)|round(2) }}%
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="result-box result-anomaly">
+                            <div class="result-title">
+                                <i class="bi bi-shield-exclamation me-2"></i> Anomaly Detected!
+                            </div>
+                            <p>The analyzed traffic pattern shows characteristics of a potential <strong>{{
+                                    result.attack_type }}</strong> attack.</p>
+                            <div class="mt-3">
+                                <strong>Confidence:</strong> {{ (result.probability * 100)|round(2) }}%
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold">Analysis Details</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group">
+                                    {% for detail in result.details %}
+                                    <li class="list-group-item">{{ detail }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold">Classification Probabilities</h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="probabilityChart" height="250"></canvas>
+                                <div class="chart-explanation mt-3">
+                                    <i class="bi bi-info-circle"></i>
+                                    <span>This chart shows the probability of the traffic belonging to each category.
+                                        Higher values indicate greater confidence in that classification.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold">Similar Known Patterns</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Attack Type</th>
+                                                <th>Protocol</th>
+                                                <th>Service</th>
+                                                <th>Similarity</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for pattern in result.similar_patterns %}
+                                            <tr>
+                                                <td>{{ pattern.attack_type }}</td>
+                                                <td>{{ pattern.protocol }}</td>
+                                                <td>{{ pattern.service }}</td>
+                                                <td>
+                                                    <div class="progress">
+                                                        <div class="progress-bar {% if pattern.similarity > 0.8 %}bg-danger{% else %}bg-warning{% endif %}"
+                                                            role="progressbar"
+                                                            style="width: {{ pattern.similarity * 100 }}%;"
+                                                            aria-valuenow="{{ pattern.similarity * 100 }}"
+                                                            aria-valuemin="0" aria-valuemax="100">
+                                                            {{ (pattern.similarity * 100)|round(1) }}%
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="chart-explanation mt-3">
+                                    <i class="bi bi-info-circle"></i>
+                                    <span>This table shows known attack patterns that are similar to the analyzed
+                                        traffic. Higher similarity percentages indicate closer matches.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold">Recommended Actions</h6>
+                            </div>
+                            <div class="card-body">
+                                {% if result.prediction == 'Normal Traffic' %}
+                                <div class="alert alert-success" role="alert">
+                                    <h5><i class="bi bi-check-circle-fill me-2"></i> No Action Required</h5>
+                                    <p>This traffic appears to be normal. Continue monitoring for any changes in
+                                        patterns.</p>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-danger" role="alert">
+                                    <h5><i class="bi bi-exclamation-triangle-fill me-2"></i> Immediate Action
+                                        Recommended</h5>
+                                    <p>Based on the detected anomaly type ({{ result.attack_type }}), consider the
+                                        following actions:</p>
+                                </div>
+                                <ul class="list-group">
+                                    {% if result.attack_type == 'DoS (Denial of Service)' %}
+                                    <li class="list-group-item">Implement rate limiting on affected services</li>
+                                    <li class="list-group-item">Configure firewall rules to block suspicious IP
+                                        addresses</li>
+                                    <li class="list-group-item">Enable SYN cookies to mitigate SYN flood attacks</li>
+                                    <li class="list-group-item">Consider deploying a DDoS protection service</li>
+                                    {% elif result.attack_type == 'Probe Attack' %}
+                                    <li class="list-group-item">Review and restrict access to sensitive ports</li>
+                                    <li class="list-group-item">Update intrusion detection system signatures</li>
+                                    <li class="list-group-item">Monitor for follow-up attacks that may exploit
+                                        discovered vulnerabilities</li>
+                                    {% elif result.attack_type == 'R2L (Remote to Local)' %}
+                                    <li class="list-group-item">Check for unauthorized access to user accounts</li>
+                                    <li class="list-group-item">Review authentication logs for suspicious activities
+                                    </li>
+                                    <li class="list-group-item">Enforce strong password policies and consider
+                                        multi-factor authentication</li>
+                                    {% elif result.attack_type == 'U2R (User to Root)' %}
+                                    <li class="list-group-item">Check for privilege escalation attempts</li>
+                                    <li class="list-group-item">Apply security patches to prevent buffer overflow
+                                        attacks</li>
+                                    <li class="list-group-item">Review system logs for unauthorized root access</li>
+                                    {% else %}
+                                    <li class="list-group-item">Investigate the anomalous traffic pattern further</li>
+                                    <li class="list-group-item">Monitor affected systems for unusual behavior</li>
+                                    <li class="list-group-item">Update security measures based on findings</li>
+                                    {% endif %}
+                                </ul>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Render probability chart
+        const ctx = document.getElementById('probabilityChart').getContext('2d');
+        const probabilityChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ result.class_probabilities.labels | tojson }},
+        datasets: [{
+            label: 'Probability',
+            data: {{ result.class_probabilities.values | tojson }},
+        backgroundColor: [
+            'rgba(28, 200, 138, 0.8)',  // Normal
+            'rgba(231, 74, 59, 0.8)',   // DoS
+            'rgba(54, 185, 204, 0.8)',  // Probe
+            'rgba(246, 194, 62, 0.8)',  // R2L
+            'rgba(78, 115, 223, 0.8)'   // U2R
+        ],
+        borderColor: [
+            'rgba(28, 200, 138, 1)',
+            'rgba(231, 74, 59, 1)',
+            'rgba(54, 185, 204, 1)',
+            'rgba(246, 194, 62, 1)',
+            'rgba(78, 115, 223, 1)'
+        ],
+        borderWidth: 1
+            }]
+        },
+        options: {
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 1,
+                title: {
+                    display: true,
+                    text: 'Probability'
+                }
+            }
+        },
+        plugins: {
+            title: {
+                display: true,
+                text: 'Classification Probabilities'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function (context) {
+                        const label = context.label || '';
+                        const value = context.raw || 0;
+                        return `${label}: ${(value * 100).toFixed(2)}%`;
+                    }
+                }
+            }
+        }
+    }
+    });
+});
+</script>
+{% endblock %}

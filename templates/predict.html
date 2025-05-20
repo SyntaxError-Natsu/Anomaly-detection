@@ -1,0 +1,417 @@
+{% extends "layout.html" %}
+
+{% block title %}Network Anomaly Detection - Live Detection{% endblock %}
+
+{% block predict_active %}active{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1><i class="bi bi-search"></i> Live Network Traffic Analysis</h1>
+    <p class="lead">Analyze network traffic parameters to detect anomalies</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Network Traffic Parameters</h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    <strong>How to use:</strong> Fill in the network parameters below or use one of the preset examples.
+                    The system will analyze the traffic and determine if it's normal or anomalous.
+                </div>
+
+                <!-- Preset Examples -->
+                <div class="mb-4">
+                    <h6 class="font-weight-bold">Quick Examples:</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-outline-primary btn-sm" id="normalExample">Normal HTTP Traffic</button>
+                        <button class="btn btn-outline-danger btn-sm" id="dosExample">DoS Attack</button>
+                        <button class="btn btn-outline-warning btn-sm" id="probeExample">Probe Attack</button>
+                        <button class="btn btn-outline-info btn-sm" id="r2lExample">R2L Attack</button>
+                    </div>
+                </div>
+
+                <!-- Normal vs Attack Comparison -->
+                <div class="mb-4">
+                    <button class="btn btn-link" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#comparisonTable" aria-expanded="false" aria-controls="comparisonTable">
+                        <i class="bi bi-table me-1"></i> View Normal vs Attack Comparison
+                    </button>
+                    <div class="collapse" id="comparisonTable">
+                        <div class="card card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Feature</th>
+                                            <th>Normal Example</th>
+                                            <th>Attack Example</th>
+                                            <th>Explanation</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Protocol Type</td>
+                                            <td>tcp</td>
+                                            <td>tcp</td>
+                                            <td>Both normal and attack traffic often use TCP</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Service</td>
+                                            <td>http</td>
+                                            <td>private</td>
+                                            <td>Attacks often target unusual or private services</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Flag</td>
+                                            <td>SF</td>
+                                            <td>S0</td>
+                                            <td>SF means normal connection, S0 means connection attempt with no response
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Source Bytes</td>
+                                            <td>215</td>
+                                            <td>0</td>
+                                            <td>Some attacks don't send any actual data</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Destination Bytes</td>
+                                            <td>45076</td>
+                                            <td>0</td>
+                                            <td>No response in many attack scenarios</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Count</td>
+                                            <td>1</td>
+                                            <td>123</td>
+                                            <td>Attacks often involve many connections to the same host</td>
+                                        </tr>
+                                        <tr>
+                                            <td>SError Rate</td>
+                                            <td>0</td>
+                                            <td>1</td>
+                                            <td>High SYN error rate is typical of SYN flood attacks</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="predictionForm" action="{{ url_for('predict') }}" method="post">
+                    <!-- Basic Connection Parameters -->
+                    <div class="feature-group">
+                        <div class="feature-group-title">
+                            <i class="bi bi-hdd-network"></i> Basic Connection Parameters
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="form-group">
+                                    <label for="duration" class="form-label">
+                                        Duration (seconds)
+                                        <i class="bi bi-question-circle-fill text-primary" data-bs-toggle="tooltip"
+                                            title="Length of the connection in seconds"></i>
+                                    </label>
+                                    <input type="number" class="form-control" id="duration" name="duration" value="0"
+                                        min="0">
+                                    <div class="feature-description">How long the connection lasted</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-group">
+                                    <label for="protocoltype" class="form-label">
+                                        Protocol Type
+                                        <i class="bi bi-question-circle-fill text-primary" data-bs-toggle="tooltip"
+                                            title="Type of protocol (TCP, UDP, ICMP)"></i>
+                                    </label>
+                                    <select class="form-select" id="protocoltype" name="protocoltype">
+                                        {% for protocol in protocol_types %}
+                                        <option value="{{ protocol }}">{{ protocol|upper }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="feature-description">Network protocol used</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-group">
+                                    <label for="service" class="form-label">
+                                        Service
+                                        <i class="bi bi-question-circle-fill text-primary" data-bs-toggle="tooltip"
+                                            title="Network service on destination (http, ftp, telnet, etc.)"></i>
+                                    </label>
+                                    <select class="form-select" id="service" name="service">
+                                        {% for service in services %}
+                                        <option value="{{ service }}">{{ service }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="feature-description">Service accessed on destination</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="form-group">
+                                    <label for="flag" class="form-label">
+                                        Connection Flag
+                                        <i class="bi bi-question-circle-fill text-primary" data-bs-toggle="tooltip"
+                                            title="Status of the connection (SF: normal, S0: connection attempt, REJ: rejected)"></i>
+                                    </label>
+                                    <select class="form-select" id="flag" name="flag">
+                                        {% for flag in flags %}
+                                        <option value="{{ flag }}">{{ flag }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="feature-description">Status flag of the connection</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-group">
+                                    <label for="srcbytes" class="form-label">
+                                        Source Bytes
+                                        <i class="bi bi-question-circle-fill text-primary" data-bs-toggle="tooltip"
+                                            title="Number of data bytes sent from source to destination"></i>
+                                    </label>
+                                    <input type="number" class="form-control" id="srcbytes" name="srcbytes" value="0"
+                                        min="0">
+                                    <div class="feature-description">Bytes sent from source to destination</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-group">
+                                    <label for="dstbytes" class="form-label">
+                                        Destination Bytes
+                                        <i class="bi bi-question-circle-fill text-primary" data-bs-toggle="tooltip"
+                                            title="Number of data bytes sent from destination to source"></i>
+                                    </label>
+                                    <input type="number" class="form-control" id="dstbytes" name="dstbytes" value="0"
+                                        min="0">
+                                    <div class="feature-description">Bytes sent from destination to source</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Connection Statistics -->
+                    <div class="feature-group">
+                        <div class="feature-group-title">
+                            <i class="bi bi-bar-chart"></i> Connection Statistics
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <div class="form-group">
+                                    <label for="count" class="form-label">
+                                        Count
+                                        <i class="bi bi-question-circle-fill text-primary" data-bs-toggle="tooltip"
+                                            title="Number of connections to the same host in the past 2 seconds"></i>
+                                    </label>
+                                    <input type="number" class="form-control" id="count" name="count" value="1" min="0">
+                                    <div class="feature-description">Connections to same host recently</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="form-group">
+                                    <label for="serrorrate" class="form-label">
+                                        SYN Error Rate
+                                        <i class="bi bi-question-circle-fill text-primary" data-bs-toggle="tooltip"
+                                            title="% of connections that have 'SYN' errors"></i>
+                                    </label>
+                                    <input type="number" class="form-control" id="serrorrate" name="serrorrate"
+                                        value="0" min="0" max="1" step="0.01">
+                                    <div class="feature-description">Rate of SYN errors (0-1)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="form-group">
+                                    <label for="rerrorrate" class="form-label">
+                                        REJ Error Rate
+                                        <i class="bi bi-question-circle-fill text-primary" data-bs-toggle="tooltip"
+                                            title="% of connections that have 'REJ' errors"></i>
+                                    </label>
+                                    <input type="number" class="form-control" id="rerrorrate" name="rerrorrate"
+                                        value="0" min="0" max="1" step="0.01">
+                                    <div class="feature-description">Rate of REJ errors (0-1)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="form-group">
+                                    <label for="samesrvrate" class="form-label">
+                                        Same Srv Rate
+                                        <i class="bi bi-question-circle-fill text-primary" data-bs-toggle="tooltip"
+                                            title="% of connections to the same service"></i>
+                                    </label>
+                                    <input type="number" class="form-control" id="samesrvrate" name="samesrvrate"
+                                        value="1" min="0" max="1" step="0.01">
+                                    <div class="feature-description">Rate of same service connections (0-1)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Parameters (Collapsible) -->
+                    <div class="mb-3">
+                        <button class="btn btn-link" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#advancedParams" aria-expanded="false" aria-controls="advancedParams">
+                            <i class="bi bi-gear-fill me-1"></i> Advanced Parameters
+                        </button>
+                    </div>
+
+                    <div class="collapse" id="advancedParams">
+                        <div class="feature-group">
+                            <div class="feature-group-title">
+                                <i class="bi bi-sliders"></i> Advanced Connection Parameters
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <div class="form-group">
+                                        <label for="land" class="form-label">Land</label>
+                                        <select class="form-select" id="land" name="land">
+                                            <option value="0">0 (No)</option>
+                                            <option value="1">1 (Yes)</option>
+                                        </select>
+                                        <div class="feature-description">1 if connection is from/to same host/port</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="form-group">
+                                        <label for="wrongfragment" class="form-label">Wrong Fragment</label>
+                                        <input type="number" class="form-control" id="wrongfragment"
+                                            name="wrongfragment" value="0" min="0">
+                                        <div class="feature-description">Number of wrong fragments</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="form-group">
+                                        <label for="urgent" class="form-label">Urgent</label>
+                                        <input type="number" class="form-control" id="urgent" name="urgent" value="0"
+                                            min="0">
+                                        <div class="feature-description">Number of urgent packets</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="form-group">
+                                        <label for="hot" class="form-label">Hot</label>
+                                        <input type="number" class="form-control" id="hot" name="hot" value="0" min="0">
+                                        <div class="feature-description">Number of "hot" indicators</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <div class="form-group">
+                                        <label for="numfailedlogins" class="form-label">Failed Logins</label>
+                                        <input type="number" class="form-control" id="numfailedlogins"
+                                            name="numfailedlogins" value="0" min="0">
+                                        <div class="feature-description">Number of failed login attempts</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="form-group">
+                                        <label for="loggedin" class="form-label">Logged In</label>
+                                        <select class="form-select" id="loggedin" name="loggedin">
+                                            <option value="0">0 (No)</option>
+                                            <option value="1">1 (Yes)</option>
+                                        </select>
+                                        <div class="feature-description">1 if successfully logged in</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="form-group">
+                                        <label for="rootshell" class="form-label">Root Shell</label>
+                                        <select class="form-select" id="rootshell" name="rootshell">
+                                            <option value="0">0 (No)</option>
+                                            <option value="1">1 (Yes)</option>
+                                        </select>
+                                        <div class="feature-description">1 if root shell is obtained</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="form-group">
+                                        <label for="srvcount" class="form-label">Service Count</label>
+                                        <input type="number" class="form-control" id="srvcount" name="srvcount"
+                                            value="1" min="0">
+                                        <div class="feature-description">Connections to same service</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="feature-group">
+                            <div class="feature-group-title">
+                                <i class="bi bi-pc-display"></i> Host-based Features
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-group">
+                                        <label for="dsthostcount" class="form-label">Dst Host Count</label>
+                                        <input type="number" class="form-control" id="dsthostcount" name="dsthostcount"
+                                            value="255" min="0">
+                                        <div class="feature-description">Connections to same destination host</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-group">
+                                        <label for="dsthostsrvcount" class="form-label">Dst Host Srv Count</label>
+                                        <input type="number" class="form-control" id="dsthostsrvcount"
+                                            name="dsthostsrvcount" value="255" min="0">
+                                        <div class="feature-description">Connections to same host/service</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-group">
+                                        <label for="dsthostserrorrate" class="form-label">Dst Host SError Rate</label>
+                                        <input type="number" class="form-control" id="dsthostserrorrate"
+                                            name="dsthostserrorrate" value="0" min="0" max="1" step="0.01">
+                                        <div class="feature-description">SYN error rate for destination host</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden fields for remaining parameters with default values -->
+                    {% for feature in feature_names %}
+                    {% if feature not in ['duration', 'protocoltype', 'service', 'flag', 'srcbytes', 'dstbytes', 'land',
+                    'wrongfragment', 'urgent', 'hot', 'numfailedlogins', 'loggedin', 'rootshell',
+                    'count', 'srvcount', 'serrorrate', 'rerrorrate', 'samesrvrate',
+                    'dsthostcount', 'dsthostsrvcount', 'dsthostserrorrate'] %}
+                    <input type="hidden" name="{{ feature }}" value="0">
+                    {% endif %}
+                    {% endfor %}
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <button type="button" class="btn btn-secondary me-md-2" id="resetForm">Reset</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search me-1"></i> Analyze Traffic
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Feature Explanation Modal -->
+<div class="modal fade" id="featureModal" tabindex="-1" aria-labelledby="featureModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="featureModalLabel">Feature Information</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="featureModalBody">
+                <!-- Content will be dynamically populated -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

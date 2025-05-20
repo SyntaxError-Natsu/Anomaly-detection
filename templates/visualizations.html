@@ -1,0 +1,134 @@
+{% extends "layout.html" %}
+
+{% block title %}Network Anomaly Detection - Visualizations{% endblock %}
+
+{% block visualizations_active %}active{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1><i class="bi bi-graph-up"></i> Detailed Visualizations</h1>
+    <p class="lead">In-depth analysis of network traffic patterns and anomalies</p>
+</div>
+
+<!-- Source Bytes Distribution -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Source Bytes Distribution by Attack Type</h6>
+            </div>
+            <div class="card-body">
+                <div id="srcbytesDistributionChart" class="chart-container" style="height: 400px;"></div>
+                <div class="chart-explanation mt-3">
+                    <i class="bi bi-info-circle"></i>
+                    <span>This box plot shows the distribution of bytes sent from source to destination for different
+                        attack types. Notice how some attacks have distinctive patterns in the amount of data
+                        transferred.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Destination Bytes Distribution -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Destination Bytes Distribution by Attack Type</h6>
+            </div>
+            <div class="card-body">
+                <div id="dstbytesDistributionChart" class="chart-container" style="height: 400px;"></div>
+                <div class="chart-explanation mt-3">
+                    <i class="bi bi-info-circle"></i>
+                    <span>This box plot shows the distribution of bytes sent from destination to source for different
+                        attack types. DoS attacks often have very little data returned from the destination.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error Rates Comparison -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Error Rates Comparison: Normal vs Attack Traffic</h6>
+            </div>
+            <div class="card-body">
+                <div id="errorRatesChart" class="chart-container" style="height: 400px;"></div>
+                <div class="chart-explanation mt-3">
+                    <i class="bi bi-info-circle"></i>
+                    <span>This chart compares various error rates between normal and attack traffic. High SYN error
+                        rates are typical of SYN flood attacks, while high REJ error rates may indicate port scanning
+                        activity.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Service Distribution -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Top 10 Services in Network Traffic</h6>
+            </div>
+            <div class="card-body">
+                <div id="serviceDistributionChart" class="chart-container" style="height: 400px;"></div>
+                <div class="chart-explanation mt-3">
+                    <i class="bi bi-info-circle"></i>
+                    <span>This chart shows the most common network services in the analyzed traffic. Attackers often
+                        target specific services that are known to have vulnerabilities.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3D Visualization -->
+<!-- <div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">3D Visualization of Key Features</h6>
+            </div>
+            <div class="card-body">
+                <div id="scatter3dChart" class="chart-container" style="height: 600px;"></div>
+                <div class="chart-explanation mt-3">
+                    <i class="bi bi-info-circle"></i>
+                    <span>This interactive 3D scatter plot shows the relationship between three key features: connection
+                        count, SYN error rate, and destination host count. You can rotate, zoom, and pan to explore how
+                        normal and attack traffic form clusters in this 3D space.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> -->
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+    var visualizations = {{ visualizations | tojson | safe }};
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Parse the JSON data for Plotly charts
+        const srcbytesDistributionData = JSON.parse('{{ visualizations.srcbytes_distribution|safe }}');
+        const dstbytesDistributionData = JSON.parse('{{ visualizations.dstbytes_distribution|safe }}');
+        const errorRatesData = JSON.parse('{{ visualizations.error_rates|safe }}');
+        const serviceDistributionData = JSON.parse('{{ visualizations.service_distribution|safe }}');
+        const scatter3dData = JSON.parse('{{ visualizations.scatter_3d|safe }}');
+
+        // Render charts
+        Plotly.newPlot('srcbytesDistributionChart', srcbytesDistributionData.data, srcbytesDistributionData.layout);
+        Plotly.newPlot('dstbytesDistributionChart', dstbytesDistributionData.data, dstbytesDistributionData.layout);
+        Plotly.newPlot('errorRatesChart', errorRatesData.data, errorRatesData.layout);
+        Plotly.newPlot('serviceDistributionChart', serviceDistributionData.data, serviceDistributionData.layout);
+        Plotly.newPlot('scatter3dChart', scatter3dData.data, scatter3dData.layout);
+    });
+</script>
+{% endblock %}

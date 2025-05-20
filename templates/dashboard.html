@@ -1,0 +1,508 @@
+{% extends "layout.html" %}
+
+{% block title %}Network Anomaly Detection - Dashboard{% endblock %}
+
+{% block dashboard_active %}active{% endblock %}
+
+{% block head %}
+<script>
+    // Variables for charts
+    const timelineLabels = {{ timeline_labels| tojson }};
+    const dosTimeline = {{ dos_timeline| tojson }};
+    const probeTimeline = {{ probe_timeline| tojson }};
+    const r2lTimeline = {{ r2l_timeline| tojson }};
+    const u2rTimeline = {{ u2r_timeline| tojson }};
+    const attackDistribution = {{ attack_distribution| tojson }};
+    const protocolNormal = {{ protocol_normal| tojson }};
+    const protocolAnomalous = {{ protocol_anomalous| tojson }};
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1><i class="bi bi-speedometer2"></i> Network Security Dashboard</h1>
+    <p class="lead">Real-time overview of network security status and anomaly detection</p>
+</div>
+
+<!-- Summary Cards -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Traffic Analyzed</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ metrics.total_traffic }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-activity fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Normal Traffic</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ metrics.normal_traffic }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Suspicious Traffic</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ metrics.suspicious_traffic }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Anomalies Detected</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ metrics.anomalies }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-shield-exclamation fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attack Distribution and Timeline -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Attack Distribution Over Time</h6>
+                <div class="dropdown no-arrow">
+                    <button class="btn btn-link btn-sm dropdown-toggle" type="button" id="dropdownMenuButton"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+                        <li><a class="dropdown-item" href="#" id="daily">Daily</a></li>
+                        <li><a class="dropdown-item" href="#" id="weekly">Weekly</a></li>
+                        <li><a class="dropdown-item" href="#" id="monthly">Monthly</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="attackTimelineChart"></canvas>
+                </div>
+                <div class="chart-explanation mt-3">
+                    <i class="bi bi-info-circle"></i>
+                    <span>This chart shows the number of different attack types detected over time. Use the dropdown
+                        menu to change the time range.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Attack Type Distribution</h6>
+            </div>
+            <div class="card-body">
+                <div id="attackDistributionChart" class="chart-container"></div>
+                <div class="mt-4 text-center small">
+                    <span class="mr-2">
+                        <i class="bi bi-circle-fill text-primary"></i> DoS ({{ attack_distribution.dos }})
+                    </span>
+                    <span class="mr-2">
+                        <i class="bi bi-circle-fill text-success"></i> Probe ({{ attack_distribution.probe }})
+                    </span>
+                    <span class="mr-2">
+                        <i class="bi bi-circle-fill text-info"></i> R2L ({{ attack_distribution.r2l }})
+                    </span>
+                    <span class="mr-2">
+                        <i class="bi bi-circle-fill text-warning"></i> U2R ({{ attack_distribution.u2r }})
+                    </span>
+                    <span class="mr-2">
+                        <i class="bi bi-circle-fill text-secondary"></i> Normal ({{ attack_distribution.normal }})
+                    </span>
+                </div>
+                <div class="chart-explanation mt-3">
+                    <i class="bi bi-info-circle"></i>
+                    <span>This pie chart shows the distribution of different attack types in the analyzed
+                        traffic.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Protocol Distribution and Feature Importance -->
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Protocol Distribution</h6>
+            </div>
+            <div class="card-body">
+                <div id="protocolDistributionChart" class="chart-container"></div>
+                <div class="chart-explanation mt-3">
+                    <i class="bi bi-info-circle"></i>
+                    <span>This chart compares the distribution of different protocols (TCP, UDP, ICMP) in normal vs.
+                        anomalous traffic.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Top Feature Importance</h6>
+            </div>
+            <div class="card-body">
+                <div id="featureImportanceChart" class="chart-container"> </div>
+                <div class="chart-explanation mt-3">
+                    <i class="bi bi-info-circle"></i>
+                    <span>This chart shows which network traffic features are most important for detecting anomalies.
+                        Longer bars indicate more important features.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Model Performance Metrics -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Model Performance Metrics</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <h4>Accuracy</h4>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar"
+                                    style="width: {{ metrics.accuracy * 100 }}%;"
+                                    aria-valuenow="{{ metrics.accuracy * 100 }}" aria-valuemin="0" aria-valuemax="100">
+                                    {{ (metrics.accuracy * 100)|round(1) }}%</div>
+                            </div>
+                            <p class="metric-explanation">Percentage of correctly classified network traffic</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <h4>Precision</h4>
+                            <div class="progress">
+                                <div class="progress-bar bg-info" role="progressbar"
+                                    style="width: {{ metrics.precision * 100 }}%;"
+                                    aria-valuenow="{{ metrics.precision * 100 }}" aria-valuemin="0" aria-valuemax="100">
+                                    {{ (metrics.precision * 100)|round(1) }}%</div>
+                            </div>
+                            <p class="metric-explanation">Percentage of true anomalies among detected anomalies</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <h4>Recall</h4>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" role="progressbar"
+                                    style="width: {{ metrics.recall * 100 }}%;"
+                                    aria-valuenow="{{ metrics.recall * 100 }}" aria-valuemin="0" aria-valuemax="100">{{
+                                    (metrics.recall * 100)|round(1) }}%</div>
+                            </div>
+                            <p class="metric-explanation">Percentage of actual anomalies that were detected</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <h4>F1 Score</h4>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary" role="progressbar"
+                                    style="width: {{ metrics.f1_score * 100 }}%;"
+                                    aria-valuenow="{{ metrics.f1_score * 100 }}" aria-valuemin="0" aria-valuemax="100">
+                                    {{ (metrics.f1_score * 100)|round(1) }}%</div>
+                            </div>
+                            <p class="metric-explanation">Harmonic mean of precision and recall</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="metrics-explanation mt-4">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>What do these metrics mean?</strong> Higher values indicate better model performance.
+                        Accuracy measures overall correctness, precision measures how many detected anomalies are real,
+                        recall measures how many real anomalies were caught, and F1 score balances precision and recall.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Correlation Heatmap -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4" style="min-height: 650px;"> <!-- Increase card height -->
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Feature Correlation Heatmap</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container"
+                    style="height: 500px; width: 100%; overflow: hidden; display: flex; justify-content: center; align-items: center;">
+                    <img src="data:image/png;base64,{{ heatmap_img }}" alt="Correlation Heatmap" class="img-fluid"
+                        style="max-width: 100%; max-height: 100%; object-fit: contain; display: block;" />
+                </div>
+                <div class="chart-explanation mt-3">
+                    <i class="bi bi-info-circle"></i>
+                    <span>This heatmap shows how different network features relate to each other. Darker colors indicate
+                        stronger correlations. This helps identify which features tend to change together during
+                        attacks.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Recent Anomalies -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Recent Anomalies</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Time</th>
+                                <th>Protocol</th>
+                                <th>Service</th>
+                                <th>Attack Type</th>
+                                <th>Source Bytes</th>
+                                <th>Destination Bytes</th>
+                                <th>Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for anomaly in recent_anomalies %}
+                            <tr>
+                                <td>{{ anomaly.time }}</td>
+                                <td>{{ anomaly.protocol }}</td>
+                                <td>{{ anomaly.service }}</td>
+                                <td><span class="badge bg-danger">{{ anomaly.attack_type }}</span></td>
+                                <td>{{ anomaly.src_bytes }}</td>
+                                <td>{{ anomaly.dst_bytes }}</td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-danger" role="progressbar"
+                                            style="width: {{ anomaly.confidence }}%;"
+                                            aria-valuenow="{{ anomaly.confidence }}" aria-valuemin="0"
+                                            aria-valuemax="100">{{ anomaly.confidence }}%</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="chart-explanation mt-3">
+                    <i class="bi bi-info-circle"></i>
+                    <span>This table shows the most recent anomalies detected in your network traffic. The confidence
+                        percentage indicates how certain the model is about the classification.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var visualizations = {{ visualizations | tojson | safe }};
+    document.addEventListener('DOMContentLoaded', function () {
+        // Attack Timeline Chart
+        const attackTimelineCtx = document.getElementById('attackTimelineChart').getContext('2d');
+        const attackTimelineChart = new Chart(attackTimelineCtx, {
+            type: 'line',
+            data: {
+                labels: timelineLabels,
+                datasets: [
+                    {
+                        label: 'DoS Attacks',
+                        data: dosTimeline,
+                        borderColor: '#4e73df',
+                        backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Probe Attacks',
+                        data: probeTimeline,
+                        borderColor: '#1cc88a',
+                        backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'R2L Attacks',
+                        data: r2lTimeline,
+                        borderColor: '#36b9cc',
+                        backgroundColor: 'rgba(54, 185, 204, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'U2R Attacks',
+                        data: u2rTimeline,
+                        borderColor: '#f6c23e',
+                        backgroundColor: 'rgba(246, 194, 62, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Attacks'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Attack Distribution Pie Chart
+        Plotly.newPlot('attackDistributionChart', [{
+            values: [
+                attackDistribution.dos,
+                attackDistribution.probe,
+                attackDistribution.r2l,
+                attackDistribution.u2r,
+                attackDistribution.normal
+            ],
+            labels: ['DoS', 'Probe', 'R2L', 'U2R', 'Normal'],
+            type: 'pie',
+            hole: 0.4,
+            marker: {
+                colors: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#858796']
+            }
+        }], {
+            title: 'Attack Type Distribution',
+            height: 340,
+            margin: { l: 30, r: 30, t: 40, b: 30 }
+        });
+
+        // Protocol Distribution Bar Chart
+        Plotly.newPlot('protocolDistributionChart', [
+            {
+                x: ['TCP', 'UDP', 'ICMP'],
+                y: protocolNormal,
+                name: 'Normal Traffic',
+                type: 'bar',
+                marker: { color: '#1cc88a' }
+            },
+            {
+                x: ['TCP', 'UDP', 'ICMP'],
+                y: protocolAnomalous,
+                name: 'Anomalous Traffic',
+                type: 'bar',
+                marker: { color: '#e74a3b' }
+            }
+        ], {
+            barmode: 'group',
+            title: 'Protocol Distribution',
+            height: 340,
+            margin: { l: 40, r: 30, t: 40, b: 40 },
+            xaxis: { title: 'Protocol Type' },
+            yaxis: { title: 'Count' }
+        });
+
+        // Feature Importance Chart (if available)
+        if (typeof visualizations !== 'undefined' && visualizations.feature_importance) {
+            const featureImportanceData = JSON.parse(visualizations.feature_importance);
+            Plotly.newPlot('featureImportanceChart', featureImportanceData.data, featureImportanceData.layout, { responsive: true });
+        }
+
+        // Correlation Heatmap (if available)
+        // if (typeof visualizations !== 'undefined' && visualizations.correlation_heatmap) {
+        //     const correlationData = JSON.parse(visualizations.correlation_heatmap);
+        //     Plotly.newPlot('correlationHeatmapChart', correlationData.data, correlationData.layout);
+        // }
+
+        // Event listeners for timeline dropdown
+        document.getElementById('daily').addEventListener('click', function () {
+            updateTimelineChart('daily');
+        });
+        document.getElementById('weekly').addEventListener('click', function () {
+            updateTimelineChart('weekly');
+        });
+        document.getElementById('monthly').addEventListener('click', function () {
+            updateTimelineChart('monthly');
+        });
+
+        // Function to update timeline chart
+        function updateTimelineChart(timeframe) {
+            fetch(`/api/timeline-data?timeframe=${timeframe}`)
+                .then(response => response.json())
+                .then(data => {
+                    attackTimelineChart.data.labels = data.labels;
+                    attackTimelineChart.data.datasets[0].data = data.dos;
+                    attackTimelineChart.data.datasets[1].data = data.probe;
+                    attackTimelineChart.data.datasets[2].data = data.r2l;
+                    attackTimelineChart.data.datasets[3].data = data.u2r;
+                    attackTimelineChart.update();
+                })
+                .catch(error => console.error('Error fetching timeline data:', error));
+        }
+    });
+</script>
+{% endblock %}
