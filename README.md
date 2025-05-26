@@ -38,23 +38,23 @@ python app.py
 
 <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; margin-top: 20px;">
   <div style="width: 300px; text-align: center;">
+    <p style="margin-top: 10px; font-weight: 500; text-align: center;">Home Page:</p>
     <img src="https://github.com/user-attachments/assets/1e2f43a4-471e-4f16-9a37-697a1669deb4" alt="User 1 message sending" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-    <p style="margin-top: 10px; font-weight: 500; text-align: center;">Home Page</p>
   </div>
   <div style="width: 300px; text-align: center;">
+    <p style="margin-top: 10px; font-weight: 500; text-align: center;">Dashboard 1:</p>
     <img src="https://github.com/user-attachments/assets/5ecd261c-03ff-4cfb-a9ab-928506479201" alt="User 2 message sending" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-    <p style="margin-top: 10px; font-weight: 500; text-align: center;">Dashboard 1</p>
   </div>
   <div style="width: 300px; text-align: center;">
+    <p style="margin-top: 10px; font-weight: 500; text-align: center;">Dashboard 2:</p>
     <img src="https://github.com/user-attachments/assets/d52712b1-bc3e-4cd1-ba5e-c4817f996fe6" alt="User 2 message editing" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-    <p style="margin-top: 10px; font-weight: 500; text-align: center;">Dashboard 2</p>
   </div>
   <div style="width: 300px; text-align: center;">
+    <p style="margin-top: 10px; font-weight: 500; text-align: center;">Visualization 1:</p>
     <img src="https://github.com/user-attachments/assets/1cb88c20-3719-4ff4-a593-e8a94cb77ad8" alt="User 1 message deleting" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-    <p style="margin-top: 10px; font-weight: 500; text-align: center;">Visualization 1</p>
   </div>
    <div style="width: 300px; text-align: center;">
+     <p style="margin-top: 10px; font-weight: 500; text-align: center;">Visualization 2:</p>
     <img src="https://github.com/user-attachments/assets/65183176-c29a-46b5-9282-3f0de31e1c8c" alt="User 1 message deleting" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-    <p style="margin-top: 10px; font-weight: 500; text-align: center;">Visualization 2</p>
   </div>
 </div>
